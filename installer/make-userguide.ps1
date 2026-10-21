@@ -42,7 +42,9 @@ if ($text -match '__VERSION__|__SHA256__') { throw '模板里还有没替换掉�
 if ($sha.Length -ne 64) { throw "算出来的 SHA256 长度不对（$($sha.Length)）" }
 
 if (-not (Test-Path $dist)) { New-Item -ItemType Directory -Path $dist | Out-Null }
-$out = Join-Path $dist '安装说明.txt'
+# 文件名用 ASCII：GitHub Release 会把非 ASCII 的 asset 名改成 default.txt，
+# 用户下载下来看到一个 default.txt 完全不知道是什么东西。
+$out = Join-Path $dist 'install-guide.txt'
 [IO.File]::WriteAllText($out, $text, (New-Object Text.UTF8Encoding $false))
 
 "已生成：$out"
