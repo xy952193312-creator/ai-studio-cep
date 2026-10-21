@@ -82,7 +82,11 @@ jobs:
           # 必须在签名之后再生成：签名会改变文件，哈希也随之改变
           ./installer/make-userguide.ps1
 
+      # 只在打 tag 时发 Release。手动触发（workflow_dispatch）没有 tag，
+      # 不加这个条件的话 action-gh-release 会把 main 当成 tag 去建 Release。
+      # 手动触发仍会构建并留下 artifact，用来验证流水线是否健康。
       - name: 发布 Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
