@@ -112,9 +112,28 @@ powershell -File installer\sign.ps1 -CertPath "D:\cert\my.pfx"
 （本机查过没装 SDK，走 Windows SDK 路线得先下几百 MB）。
 没有证书时先跑 `powershell -File installer\sign.ps1 -SelfSigned` 验证链路。
 
+### SignPath 审核通过后：signpath-setup.ps1
+
+凭证明面上是三样东西，散在 GitHub 的 Secrets / Variables 两页和 SignPath 控制台三处，
+手点很容易一边名字对不上、另一边 slug 对不上 —— 然后 CI 静默跳过签名，流水线全绿，
+发出去的却是没签名的包。这个脚本就是把这堆一次配齐并当场校验：
+
+```powershell
+# 先空跑，确认脚本本身和 workflow 都没问题（不写任何东西、不要 Token）
+powershell -File installer\signpath-setup.ps1 -OrganizationId 占位 -DryRun
+
+# 拿到 SignPath 凭证后正式跑（Token 从提示符读，不回显）
+powershell -File installer\signpath-setup.ps1 -OrganizationId "<Organization ID>"
+```
+
+`-DryRun` 会逐项检查 7 条，其中几条是「错了也不报错、只会静默不签名」的类型：
+三个 slug、`vars.SIGNPATH_ORGANIZATION_ID` 守卫、`secrets.SIGNPATH_API_TOKEN` 名、
+以及「安装说明必须在签名之后生成」（签名会改变文件字节，SHA256 得算签名后的）。
+
 ### 一分钱不花的缓解办法
 
-`dist\安装说明.txt` —— 把这个文件连同 exe 一起发给对方即可：
+`dist\install-guide.txt` —— 把这个文件连同 exe 一起发给对方即可
+（文件名用 ASCII：GitHub 会把中文 asset 名改成 `default.txt`）：
 
 - 附 SHA256 校验值，让对方能自己确认文件没被动过
 - 教对方右键 → 属性 → 勾选「解除锁定」，一次就消掉 SmartScreen 那层拦截
