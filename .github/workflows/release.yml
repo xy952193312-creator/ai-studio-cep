@@ -112,4 +112,4 @@ jobs:
         with:
           files: |
             dist/*.exe
-            dist/安装说明.txt
+            dist/install-guide.txt
