@@ -1,0 +1,90 @@
+# 构建 → 签名 → 发 Release
+#
+# 触发：打 tag（git tag v1.2.14 && git push --tags），或在 Actions 页手动跑。
+#
+# 没配 SignPath 时这个工作流照样能跑完，只是发布未签名的包 ——
+# 不会因为缺 secrets 就整条流水线红掉。SignPath 配好之后自动开始签名。
+
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Inno Setup 是第三方软件，没进仓库（见 .gitignore），CI 上自己装。
+      # 装的是 6.x，installer\build.ps1 的候选路径里已经包含 Inno Setup 6。
+      - name: 安装 Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: 编译安装包
+        shell: pwsh
+        run: ./installer/build.ps1
+
+      - name: 上传未签名产物
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-studio-setup
+          path: dist/AIStudio-CEP-Setup-*.exe
+          if-no-files-found: error
+
+      # ---- 签名 ----
+      # 参数名以 SignPath 官方 demo 仓库为准：
+      #   github.com/SignPath/github-actions-demo
+      # 这个 action 在 v1 / v2 之间改过参数，照抄网上教程前先看一眼它的 action.yml。
+      # SignPath 侧还要求：GitHub Actions Trusted Build System 已在组织里启用，
+      # 且 Artifact Configuration 的根元素是 zip（GitHub 的 artifact 本来就是 zip）。
+      - name: 提交 SignPath 签名
+        id: signpath
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: 'ai-studio-cep'
+          signing-policy-slug: 'release-signing'
+          artifact-configuration-slug: 'setup-exe'
+          github-artifact-id: ${{ steps.upload.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed
+
+      # 签名这一步"跑完了"和"真的签上了"是两回事。不校验的话，
+      # 哪天 token 失效、策略配错，流水线照样全绿，发出去的还是没签名的包。
+      - name: 校验签名并生成安装说明
+        shell: pwsh
+        env:
+          SIGNED: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+        run: |
+          if ($env:SIGNED -eq 'true') {
+            $exe = Get-ChildItem signed -Recurse -Filter *.exe | Select-Object -First 1
+            if (-not $exe) { throw '签名产物里没找到 exe' }
+            $sig = Get-AuthenticodeSignature $exe.FullName
+            "签名状态 : $($sig.Status)"
+            "发布者    : $($sig.SignerCertificate.Subject)"
+            if ($sig.Status -ne 'Valid') { throw "签名状态不是 Valid：$($sig.Status)" }
+            Copy-Item $exe.FullName 'dist/' -Force
+            '已用签名后的文件覆盖 dist'
+          } else {
+            '未配置 SignPath（vars.SIGNPATH_ORGANIZATION_ID 为空），本次发布未签名'
+          }
+          # 必须在签名之后再生成：签名会改变文件，哈希也随之改变
+          ./installer/make-userguide.ps1
+
+      - name: 发布 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+            dist/安装说明.txt
