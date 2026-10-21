@@ -21,6 +21,33 @@ dist\AIStudio-CEP-Setup-1.2.14.exe    2.1 MB
 重新构建和发布注意事项见 [`installer/README.md`](installer/README.md)。
 测试：`powershell -File installer\test.ps1`（25 项，用隔离的 AppId，不碰你真装的那份）。
 
+**下载**：<https://github.com/xy952193312-creator/ai-studio-cep/releases/latest>
+
+## Code signing policy
+
+**Free code signing provided by [SignPath.io](https://signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).**
+
+- Committers and reviewers: [@xy952193312-creator](https://github.com/xy952193312-creator) (project owner)
+- Approvers: [@xy952193312-creator](https://github.com/xy952193312-creator)
+
+Release installers (`AIStudio-CEP-Setup-*.exe`) are built from this repository by
+[GitHub Actions](.github/workflows/release.yml) and signed through SignPath.io.
+Until the first signed release is published, the installers are unsigned —
+verify them against the SHA-256 published in each release.
+
+## Privacy policy
+
+This program will not transfer any information to any other networked systems
+unless specifically requested by the user or the person installing or operating it.
+
+Concretely:
+
+- The only outbound requests are the image-generation API calls **you** configure in the
+  panel's "Mine" page, sent directly to the endpoint you enter.
+- No telemetry, no analytics, no hardcoded endpoints or credentials.
+- Conversation history and generated images are stored locally on your machine
+  (the folder is shown in "Mine → 存储位置"). Uninstalling keeps them.
+
 ## 版本记录
 
 ### v1.2.14 — 安装程序终于真的去找 Photoshop 了（2026-10-21）
