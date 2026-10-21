@@ -1,0 +1,8 @@
+# 换行统一交给 Git 处理：仓库里存 LF，Windows 上检出自动转 CRLF。
+# 不加这个的话，PowerShell 脚本（*.ps1）在别人机器上可能因为换行不一致出问题。
+* text=auto
+
+# 二进制文件别让 Git 自作聪明去转换
+*.png binary
+*.jpg binary
+*.exe binary

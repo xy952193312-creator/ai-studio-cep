@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Studio</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- ===== 顶部全局导航 ===== -->
+    <header class="sp-tabs">
+      <div class="sp-tabs-container" id="tabs"><!-- 由 app.js 渲染 --></div>
+      <div class="sp-tabs-extend">
+        <span class="extend-link" id="apiBadge" title="点击前往配置">未配置</span>
+      </div>
+    </header>
+
+    <!-- ===== 页面容器 ===== -->
+    <main class="sp-tab-page" id="view"><!-- 由路由渲染 --></main>
+
+  </div>
+
+  <!-- 轻提示 -->
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <!-- 图片预览遮罩 -->
+  <div class="lightbox" id="lightbox" hidden>
+    <div class="lightbox-mask" data-close="1"></div>
+    <div class="lightbox-body">
+      <img id="lightboxImg" alt="预览">
+      <div class="lightbox-bar">
+        <span id="lightboxTip" class="lightbox-tip"></span>
+        <span class="lightbox-acts" id="lightboxActs"></span>
+        <button class="btn btn-ghost btn-sm" id="lightboxClose">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通用确认弹窗 -->
+  <div class="modal" id="confirmModal" hidden>
+    <div class="modal-mask" data-close="1"></div>
+    <div class="modal-card">
+      <div class="modal-title" id="confirmTitle">确认操作</div>
+      <div class="modal-text" id="confirmText"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="confirmCancel">取消</button>
+        <button class="btn btn-danger" id="confirmOk">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 脚本按依赖顺序加载（使用经典脚本，避免 file:// 下 ES Module 被拦截） -->
+  <!-- guard.js 必须排第一：注册全局错误捕获 + 白屏自愈看门狗 -->
+  <script src="js/guard.js"></script>
+  <!-- diag.js 紧随其后：越早加载越能抓到启动期事件，并负责把日志落盘 -->
+  <script src="js/diag.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/CSInterface.js"></script>
+  <script src="js/ps.js"></script>
+  <script src="js/library.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/uploader.js"></script>
+  <script src="js/pages/edit.js"></script>
+  <script src="js/pages/generate.js"></script>
+  <script src="js/pages/history.js"></script>
+  <script src="js/tasks.js"></script>
+  <script src="js/pages/mine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

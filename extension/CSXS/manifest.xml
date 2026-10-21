@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  CEP 扩展清单
+  说明：BundleId / ExtensionId 需与安装目录名一致，否则 Photoshop 不加载。
+
+  注意：注释里不能出现连续两个减号（这正是 CEF 参数的写法），
+  XML 会把它当成注释的结束标记，整份清单失效，PS 里连菜单项都不出现。
+-->
+<ExtensionManifest Version="9.0"
+                   ExtensionBundleId="com.xy.aistudio.cep"
+                   ExtensionBundleVersion="1.2.14"
+                   ExtensionBundleName="AI Studio">
+
+  <ExtensionList>
+    <Extension Id="com.xy.aistudio.cep.panel" Version="1.2.14"/>
+  </ExtensionList>
+
+  <ExecutionEnvironment>
+    <HostList>
+      <!-- PHXS = Photoshop 主体，PHSP = 精简版宿主 -->
+      <!--
+        下限 23.0 = Photoshop 2022（CEP 11 / Chromium 88），依据见下。
+        上限 99.9 是 CEP 惯例写法，表示不设上限。
+
+        为什么下限卡在 2022（2026-10-20 实测）：
+        CSS 用了 flex gap（Chromium 84+）和 inset（Chromium 87+），
+        二者在 CEP 11 之前不生效。inset 用在全部 7 处遮罩层上
+        （lightbox / modal / dp-mask / thumb-mask / result-mask / thumb-acts），
+        低版本遮罩铺不满，图片预览与确认弹窗会直接失效，
+        属于功能损坏，不只是难看。
+        JS 侧零处现代语法，JSX 侧全是 CS 时代就有的 Action Manager API，
+        这两层本可下探到 CC 2019，是 CSS 卡住了下限。
+
+        若要下探到 PS 2020 / CC 2019，需先给 CSS 降级：
+        inset:0 改写成 top/right/bottom/left 各 0，flex gap 用 margin 兜底，
+        并在目标版本真机实测（CEF 参数在 CEP 9/10 上的行为另需验证）。
+      -->
+      <Host Name="PHXS" Version="[23.0,99.9]"/>
+      <Host Name="PHSP" Version="[23.0,99.9]"/>
+    </HostList>
+    <LocaleList>
+      <Locale Code="All"/>
+    </LocaleList>
+    <RequiredRuntimeList>
+      <RequiredRuntime Name="CSXS" Version="9.0"/>
+    </RequiredRuntimeList>
+  </ExecutionEnvironment>
+
+  <DispatchInfoList>
+    <Extension Id="com.xy.aistudio.cep.panel">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>./index.html</MainPath>
+          <ScriptPath>./jsx/host.jsx</ScriptPath>
+          <!-- 关闭跨域限制，否则自定义 API 地址会被 CORS 拦截 -->
+          <!--
+            参数对齐同机可正常显示的 DLSS 5 扩展（2026-10-20 灰屏排查）：
+            它同样带 enable-nodejs 和 mixed-mode，而我们的面板只给了
+            三条跨域参数，渲染进程起在「纯浏览器」模式。先补齐做对照。
+          -->
+          <CEFCommandLine>
+            <Parameter>--enable-nodejs</Parameter>
+            <Parameter>--mixed-mode</Parameter>
+            <Parameter>--disable-web-security</Parameter>
+            <Parameter>--allow-running-insecure-content</Parameter>
+            <Parameter>--allow-file-access-from-files</Parameter>
+          </CEFCommandLine>
+        </Resources>
+
+        <Lifecycle>
+          <!--
+            AutoVisible 决定面板窗口什么时候被真正创建出来。
+            原先设成 false：PS 启动时不建窗口，等用户从「窗口 > 扩展功能」
+            点开时再补建。PS 26 上这条路会出问题 —— 页面确实加载了（JS 在跑、
+            CDP 能截到完整画面），但窗口始终拿不到可见区域，屏幕上就是一片灰。
+            同机能正常显示的 DLSS 5 用的是 true，这里对齐它。
+            代价是开 PS 时面板会自动弹出，不需要的话在面板里收起即可。
+          -->
+          <AutoVisible>true</AutoVisible>
+        </Lifecycle>
+
+        <UI>
+          <Type>Panel</Type>
+          <Menu>AI Studio</Menu>
+          <Geometry>
+            <Size>
+              <Height>680</Height>
+              <Width>380</Width>
+            </Size>
+            <MinSize>
+              <Height>420</Height>
+              <Width>330</Width>
+            </MinSize>
+            <MaxSize>
+              <Height>1600</Height>
+              <Width>900</Width>
+            </MaxSize>
+          </Geometry>
+          <Icons>
+            <Icon Type="Normal">./icons/panel.png</Icon>
+            <Icon Type="RollOver">./icons/panel.png</Icon>
+            <Icon Type="Disabled">./icons/iconDisabled.png</Icon>
+            <Icon Type="DarkNormal">./icons/panel.png</Icon>
+            <Icon Type="DarkRollOver">./icons/iconDarkRollOver.png</Icon>
+          </Icons>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+  </DispatchInfoList>
+</ExtensionManifest>
